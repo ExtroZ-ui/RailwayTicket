@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 namespace TrainTickets {
 
@@ -12,79 +11,93 @@ namespace TrainTickets {
     public:
         StatsForm(Dictionary<String^, int>^ departureStats, Dictionary<String^, int>^ arrivalStats)
         {
-            this->Text = "Статистика билетов по городам";
+            this->Text = "Статистика по городам: Из / В / Итого";
             this->Size = Drawing::Size(600, 500);
             this->StartPosition = FormStartPosition::CenterParent;
 
-            Label^ depLabel = gcnew Label();
-            depLabel->Text = "Отправления (Откуда)";
-            depLabel->Location = Drawing::Point(10, 10);
-            depLabel->AutoSize = true;
+            Label^ titleLabel = gcnew Label();
+            titleLabel->Text = "Города, отсортированные по общему числу билетов (из + в)";
+            titleLabel->Location = Drawing::Point(10, 10);
+            titleLabel->AutoSize = true;
 
-            DataGridView^ depGrid = gcnew DataGridView();
-            depGrid->Location = Drawing::Point(10, 30);
-            depGrid->Size = Drawing::Size(560, 180);
-            depGrid->ReadOnly = true;
-            depGrid->AllowUserToAddRows = false;
-            depGrid->AllowUserToDeleteRows = false;
-            depGrid->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
-            depGrid->SelectionMode = DataGridViewSelectionMode::FullRowSelect;
-            depGrid->Columns->Add("city", "Город");
-            depGrid->Columns->Add("count", "Количество билетов");
+            DataGridView^ grid = gcnew DataGridView();
+            grid->Location = Drawing::Point(10, 40);
+            grid->Size = Drawing::Size(560, 380);
+            grid->ReadOnly = true;
+            grid->AllowUserToAddRows = false;
+            grid->AllowUserToDeleteRows = false;
+            grid->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
+            grid->SelectionMode = DataGridViewSelectionMode::FullRowSelect;
 
-            FillGrid(depGrid, departureStats);
+            grid->Columns->Add("city", "Город");
+            grid->Columns->Add("from", "Из");
+            grid->Columns->Add("to", "В");
+            grid->Columns->Add("total", "Итого");
 
-            Label^ arrLabel = gcnew Label();
-            arrLabel->Text = "Прибытия (Куда)";
-            arrLabel->Location = Drawing::Point(10, 230);
-            arrLabel->AutoSize = true;
-
-            DataGridView^ arrGrid = gcnew DataGridView();
-            arrGrid->Location = Drawing::Point(10, 250);
-            arrGrid->Size = Drawing::Size(560, 180);
-            arrGrid->ReadOnly = true;
-            arrGrid->AllowUserToAddRows = false;
-            arrGrid->AllowUserToDeleteRows = false;
-            arrGrid->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
-            arrGrid->SelectionMode = DataGridViewSelectionMode::FullRowSelect;
-            arrGrid->Columns->Add("city", "Город");
-            arrGrid->Columns->Add("count", "Количество билетов");
-
-            FillGrid(arrGrid, arrivalStats);
+            FillGrid(grid, departureStats, arrivalStats);
 
             Button^ closeBtn = gcnew Button();
             closeBtn->Text = "Закрыть";
             closeBtn->Width = 100;
             closeBtn->Height = 30;
-            closeBtn->Location = Drawing::Point(470, 440);
+            closeBtn->Location = Drawing::Point(470, 430);
             closeBtn->Click += gcnew EventHandler(this, &StatsForm::OnClose);
 
-            this->Controls->Add(depLabel);
-            this->Controls->Add(depGrid);
-            this->Controls->Add(arrLabel);
-            this->Controls->Add(arrGrid);
+            this->Controls->Add(titleLabel);
+            this->Controls->Add(grid);
             this->Controls->Add(closeBtn);
         }
 
     private:
-        void FillGrid(DataGridView^ grid, Dictionary<String^, int>^ stats)  
-        {  
-           grid->Rows->Clear();  
+        void FillGrid(DataGridView^ grid, Dictionary<String^, int>^ depStats, Dictionary<String^, int>^ arrStats)
+        {
+            grid->Rows->Clear();
 
-           // Сортируем по убыванию количества, затем по алфавиту  
-           List<KeyValuePair<String^, int>>^ list = gcnew List<KeyValuePair<String^, int>>(stats);  
-           list->Sort(gcnew Comparison<KeyValuePair<String^, int>>(this, &StatsForm::CompareKeyValuePairs));  
+            Dictionary<String^, Tuple<int, int>^>^ combined = gcnew Dictionary<String^, Tuple<int, int>^>();
 
-           for each (auto pair in list) {  
-               grid->Rows->Add(pair.Key, pair.Value);  
-           }  
-        }  
+            // Заполняем из departure
+            for each (auto pair in depStats) {
+                if (!combined->ContainsKey(pair.Key)) {
+                    combined[pair.Key] = gcnew Tuple<int, int>(pair.Value, 0);
+                }
+                else {
+                    int arr = combined[pair.Key]->Item2;
+                    combined[pair.Key] = gcnew Tuple<int, int>(pair.Value, arr);
+                }
+            }
 
-        int CompareKeyValuePairs(KeyValuePair<String^, int> a, KeyValuePair<String^, int> b)  
-        {  
-           if (a.Value != b.Value)  
-               return b.Value.CompareTo(a.Value);  
-           return a.Key->CompareTo(b.Key);  
+            // Заполняем из arrival
+            for each (auto pair in arrStats) {
+                if (!combined->ContainsKey(pair.Key)) {
+                    combined[pair.Key] = gcnew Tuple<int, int>(0, pair.Value);
+                }
+                else {
+                    int dep = combined[pair.Key]->Item1;
+                    combined[pair.Key] = gcnew Tuple<int, int>(dep, pair.Value);
+                }
+            }
+
+            // Переводим в список и сортируем
+            List<Tuple<String^, int, int, int>^>^ list = gcnew List<Tuple<String^, int, int, int>^>();
+            for each (auto pair in combined) {
+                int from = pair.Value->Item1;
+                int to = pair.Value->Item2;
+                int total = from + to;
+                list->Add(gcnew Tuple<String^, int, int, int>(pair.Key, from, to, total));
+            }
+
+            list->Sort(gcnew Comparison<Tuple<String^, int, int, int>^>(this, &StatsForm::CompareStats));
+
+            for each (auto entry in list) {
+                grid->Rows->Add(entry->Item1, entry->Item2, entry->Item3, entry->Item4);
+            }
+        }
+
+        int CompareStats(Tuple<String^, int, int, int>^ a, Tuple<String^, int, int, int>^ b)
+        {
+            if (a->Item4 != b->Item4)
+                return b->Item4.CompareTo(a->Item4); // по убыванию итого
+            return a->Item1->CompareTo(b->Item1);    // по алфавиту
         }
 
         void OnClose(Object^, EventArgs^) {
