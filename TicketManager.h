@@ -66,6 +66,15 @@ public:
         tickets->Add(t);
     }
 
+    void Update(int index, Ticket^ updated) {
+        if (index < 0 || index >= tickets->Count)
+            throw gcnew ArgumentOutOfRangeException("Недопустимый индекс для изменения: " + index);
+        if (updated == nullptr)
+            throw gcnew ArgumentNullException("Новый билет не может быть null");
+
+        tickets[index] = updated;
+    }
+
     void Delete(int index) {
         if (index >= 0 && index < tickets->Count)
             tickets->RemoveAt(index);

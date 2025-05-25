@@ -22,6 +22,7 @@ namespace TrainTickets {
         Button^ priceBtn;
         Button^ servicesBtn;
         Button^ statsBtn;
+        Button^ editBtn;
 
     public:
         MainForm() {
@@ -32,6 +33,7 @@ namespace TrainTickets {
         void InitializeComponent() {
             this->Text = "Железнодорожная касса";
             this->Size = Drawing::Size(1000, 600);
+            this->StartPosition = FormStartPosition::CenterScreen;
 
             grid = gcnew DataGridView();
             grid->Location = Drawing::Point(10, 10);
@@ -51,6 +53,7 @@ namespace TrainTickets {
             loadBtn = gcnew Button(); loadBtn->Text = "Загрузить"; loadBtn->Click += gcnew EventHandler(this, &MainForm::OnLoad);
             saveBtn = gcnew Button(); saveBtn->Text = "Сохранить"; saveBtn->Click += gcnew EventHandler(this, &MainForm::OnSave);
             addBtn = gcnew Button(); addBtn->Text = "Добавить"; addBtn->Click += gcnew EventHandler(this, &MainForm::OnAdd);
+            editBtn = gcnew Button(); editBtn->Text = "Изменить"; editBtn->Click += gcnew EventHandler(this, &MainForm::OnEdit);
             deleteBtn = gcnew Button(); deleteBtn->Text = "Удалить"; deleteBtn->Click += gcnew EventHandler(this, &MainForm::OnDelete);
             sortBtn = gcnew Button(); sortBtn->Text = "Сортировка"; sortBtn->Click += gcnew EventHandler(this, &MainForm::OnSort);
             findBtn = gcnew Button(); findBtn->Text = "Поиск"; findBtn->Click += gcnew EventHandler(this, &MainForm::OnFind);
@@ -58,9 +61,12 @@ namespace TrainTickets {
             servicesBtn = gcnew Button(); servicesBtn->Text = "Услуги"; servicesBtn->Click += gcnew EventHandler(this, &MainForm::OnExtractServices);
             statsBtn = gcnew Button(); statsBtn->Text = "Статистика"; statsBtn->Click += gcnew EventHandler(this, &MainForm::OnStats);
 
-            array<Button^>^ buttons = { loadBtn, saveBtn, addBtn, deleteBtn, sortBtn, findBtn, priceBtn, servicesBtn, statsBtn };
-            for each (Button ^ btn in buttons)
+            array<Button^>^ buttons = { loadBtn, saveBtn, addBtn, editBtn, deleteBtn, sortBtn, findBtn, priceBtn, servicesBtn, statsBtn };
+            for each (Button ^ btn in buttons) {
+                btn->Width = 90;
+                btn->Height = 30;
                 panel->Controls->Add(btn);
+            }
             this->Controls->Add(panel);
         }
 
@@ -79,14 +85,13 @@ namespace TrainTickets {
             for each (Ticket ^ t in list) {
                 grid->Rows->Add(t->passengerName, t->trainNumber, t->departureCity, t->arrivalCity,
                     Convert::ToString(t->wagonType), t->price.ToString("F2"), t->hasDiscount ? "Да" : "Нет",
-                    String::Format("{0}.{1}.{2} {3}:{4}:{5}",
-                        t->dateTime.date.year, t->dateTime.date.month, t->dateTime.date.day,
+                    String::Format("{0:D2}.{1:D2}.{2:D4} {3:D2}:{4:D2}:{5:D2}",
+                        t->dateTime.date.day, t->dateTime.date.month, t->dateTime.date.year,
                         t->dateTime.time.hour, t->dateTime.time.minute, t->dateTime.time.second));
             }
         }
 
-        String^ PromptInput(String^ text, String^ caption)
-        {
+        String^ PromptInput(String^ text, String^ caption) {
             Form^ prompt = gcnew Form();
             prompt->Width = 400;
             prompt->Height = 150;
@@ -156,11 +161,23 @@ namespace TrainTickets {
             }
         }
 
-
-        void OnAdd(Object^ sender, EventArgs^ e) {
+        void OnAdd(Object^, EventArgs^) {
             AddTicketForm^ form = gcnew AddTicketForm();
             if (form->ShowDialog() == System::Windows::Forms::DialogResult::OK && form->result != nullptr) {
                 manager->Add(form->result);
+                UpdateGrid(manager->GetAll());
+            }
+        }
+
+        void OnEdit(Object^, EventArgs^) {
+            if (grid->SelectedRows->Count == 0) return;
+
+            int index = grid->SelectedRows[0]->Index;
+            Ticket^ ticket = manager->GetAll()[index];
+
+            AddTicketForm^ form = gcnew AddTicketForm(ticket);
+            if (form->ShowDialog() == System::Windows::Forms::DialogResult::OK && form->result != nullptr) {
+                manager->Update(index, form->result);
                 UpdateGrid(manager->GetAll());
             }
         }
@@ -180,17 +197,22 @@ namespace TrainTickets {
 
         void OnFind(Object^, EventArgs^) {
             String^ input = PromptInput("Введите номер поезда:", "Поиск");
-            unsigned short num = Convert::ToUInt16(input);
-            UpdateGrid(manager->FindByTrainNumber(num));
+            try {
+                unsigned short num = Convert::ToUInt16(input);
+                UpdateGrid(manager->FindByTrainNumber(num));
+            }
+            catch (...) {
+                MessageBox::Show("Некорректный номер поезда.", "Ошибка", MessageBoxButtons::OK, MessageBoxIcon::Error);
+            }
         }
 
         void OnPriceFilter(Object^, EventArgs^) {
-            float min = 100, max = 1000; // можно запросить у пользователя
+            float min = 100, max = 1000;
             UpdateGrid(manager->FilterByPrice(min, max));
         }
 
         void OnExtractServices(Object^, EventArgs^) {
-            Char type = 'К'; // или запросить
+            Char type = 'К';
             List<Ticket^>^ extracted = manager->ExtractWithServices(type);
             UpdateGrid(manager->GetAll());
             MessageBox::Show("Перенесено: " + extracted->Count.ToString());
