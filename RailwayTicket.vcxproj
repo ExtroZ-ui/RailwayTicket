@@ -134,6 +134,8 @@
     <ClInclude Include="AddTicketForm.h" />
     <ClInclude Include="CDateTime.h" />
     <ClInclude Include="MainForm.h" />
+    <ClInclude Include="PriceRangeForm.h" />
+    <ClInclude Include="StatsForm.h" />
     <ClInclude Include="Ticket.h" />
     <ClInclude Include="TicketManager.h" />
   </ItemGroup>

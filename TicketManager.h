@@ -116,15 +116,27 @@ public:
         return result;
     }
 
-    Dictionary<String^, int>^ CityStats() {
-        Dictionary<String^, int>^ stats = gcnew Dictionary<String^, int>();
+    Dictionary<String^, int>^ TicketManager::DepartureCityStats() {
+        auto dict = gcnew Dictionary<String^, int>();
+
         for each (Ticket ^ t in tickets) {
-            for each (String ^ city in gcnew array<String^> { t->departureCity, t->arrivalCity }) {
-                if (!stats->ContainsKey(city))
-                    stats[city] = 0;
-                stats[city]++;
-            }
+            if (!dict->ContainsKey(t->departureCity))
+                dict[t->departureCity] = 0;
+            dict[t->departureCity]++;
         }
-        return stats;
+
+        return dict;
+    }
+
+    Dictionary<String^, int>^ TicketManager::ArrivalCityStats() {
+        auto dict = gcnew Dictionary<String^, int>();
+
+        for each (Ticket ^ t in tickets) {
+            if (!dict->ContainsKey(t->arrivalCity))
+                dict[t->arrivalCity] = 0;
+            dict[t->arrivalCity]++;
+        }
+
+        return dict;
     }
 };

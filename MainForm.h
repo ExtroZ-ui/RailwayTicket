@@ -1,6 +1,8 @@
 #pragma once
 #include "TicketManager.h"
 #include "AddTicketForm.h"
+#include "PriceRangeForm.h"
+#include "StatsForm.h"
 #using <Microsoft.VisualBasic.dll>
 
 namespace TrainTickets {
@@ -197,9 +199,27 @@ namespace TrainTickets {
 
         void OnFind(Object^, EventArgs^) {
             String^ input = PromptInput("Введите номер поезда:", "Поиск");
+
+            // Если пользователь нажал "Отмена" или ничего не ввёл — просто выходим
+            if (String::IsNullOrWhiteSpace(input)) {
+                // Можно показать все билеты или не менять таблицу
+                UpdateGrid(manager->GetAll());
+                return;
+            }
+
             try {
                 unsigned short num = Convert::ToUInt16(input);
-                UpdateGrid(manager->FindByTrainNumber(num));
+                auto results = manager->FindByTrainNumber(num);
+
+                // Если результатов нет — можно вывести сообщение или очистить таблицу
+                if (results->Count == 0) {
+                    MessageBox::Show("Поезда с таким номером не найдено.", "Поиск", MessageBoxButtons::OK, MessageBoxIcon::Information);
+                    // По желанию — показать все билеты или очистить
+                    UpdateGrid(manager->GetAll());
+                }
+                else {
+                    UpdateGrid(results);
+                }
             }
             catch (...) {
                 MessageBox::Show("Некорректный номер поезда.", "Ошибка", MessageBoxButtons::OK, MessageBoxIcon::Error);
@@ -207,8 +227,16 @@ namespace TrainTickets {
         }
 
         void OnPriceFilter(Object^, EventArgs^) {
-            float min = 100, max = 1000;
-            UpdateGrid(manager->FilterByPrice(min, max));
+            PriceRangeForm^ form = gcnew PriceRangeForm();
+            if (form->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
+                try {
+                    auto filtered = manager->FilterByPrice(form->MinPrice, form->MaxPrice);
+                    UpdateGrid(filtered);
+                }
+                catch (Exception^ ex) {
+                    MessageBox::Show("Ошибка при фильтрации: " + ex->Message, "Ошибка", MessageBoxButtons::OK, MessageBoxIcon::Error);
+                }
+            }
         }
 
         void OnExtractServices(Object^, EventArgs^) {
@@ -218,13 +246,15 @@ namespace TrainTickets {
             MessageBox::Show("Перенесено: " + extracted->Count.ToString());
         }
 
+
         void OnStats(Object^, EventArgs^) {
-            auto stats = manager->CityStats();
-            String^ result = "";
-            for each (System::Collections::Generic::KeyValuePair<String^, int> pair in stats) {
-                result += pair.Key + ": " + pair.Value + "\n";
-            }
-            MessageBox::Show(result);
+            auto departureStats = manager->DepartureCityStats();
+            auto arrivalStats = manager->ArrivalCityStats();
+
+            StatsForm^ statsForm = gcnew StatsForm(departureStats, arrivalStats);
+            statsForm->ShowDialog(this);
         }
+
+
     };
 }
