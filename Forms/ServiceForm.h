@@ -1,6 +1,6 @@
 #pragma once
-#include "TicketManager.h"
-#include "MainForm.h"
+#include "Models/TicketManager.h"
+#include "Forms/MainForm.h"
 
 using namespace System;
 using namespace System::Windows::Forms;

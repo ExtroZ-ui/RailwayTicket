@@ -131,20 +131,20 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AddTicketForm.h" />
-    <ClInclude Include="CDateTime.h" />
-    <ClInclude Include="MainForm.h" />
-    <ClInclude Include="PriceRangeForm.h" />
-    <ClInclude Include="ServiceForm.h" />
-    <ClInclude Include="StatsForm.h" />
-    <ClInclude Include="Ticket.h" />
-    <ClInclude Include="TicketManager.h" />
+    <ClInclude Include="Forms\AddTicketForm.h" />
+    <ClInclude Include="Forms\MainForm.h" />
+    <ClInclude Include="Forms\PriceRangeForm.h" />
+    <ClInclude Include="Forms\ServiceForm.h" />
+    <ClInclude Include="Forms\StatsForm.h" />
+    <ClInclude Include="Models\CDateTime.h" />
+    <ClInclude Include="Models\Ticket.h" />
+    <ClInclude Include="Models\TicketManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Base.txt" />
+    <Text Include="Data\Base.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

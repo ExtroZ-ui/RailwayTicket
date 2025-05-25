@@ -1,9 +1,9 @@
 #pragma once
-#include "TicketManager.h"
-#include "AddTicketForm.h"
-#include "PriceRangeForm.h"
-#include "StatsForm.h"
-#include "ServiceForm.h"
+#include "Models/TicketManager.h"
+#include "Forms/AddTicketForm.h"
+#include "Forms/PriceRangeForm.h"
+#include "Forms/StatsForm.h"
+#include "Forms/ServiceForm.h"
 #using <Microsoft.VisualBasic.dll>
 
 namespace TrainTickets {

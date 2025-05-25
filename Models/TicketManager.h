@@ -1,5 +1,5 @@
 #pragma once
-#include "Ticket.h"
+#include "Models/Ticket.h"
 
 using namespace System;
 using namespace System::Collections::Generic;
