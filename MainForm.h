@@ -1,5 +1,6 @@
 #pragma once
 #include "TicketManager.h"
+#include "AddTicketForm.h"
 #using <Microsoft.VisualBasic.dll>
 
 namespace TrainTickets {
@@ -121,22 +122,47 @@ namespace TrainTickets {
 
         void OnLoad(Object^, EventArgs^) {
             OpenFileDialog^ ofd = gcnew OpenFileDialog();
+            ofd->Filter = "Текстовые файлы (*.txt)|*.txt";
+            ofd->Title = "Открыть файл базы данных";
+            ofd->Multiselect = false;
+
             if (ofd->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
-                manager->Load(ofd->FileName);
-                UpdateGrid(manager->GetAll());
+                try {
+                    manager->Load(ofd->FileName);
+                    UpdateGrid(manager->GetAll());
+                    MessageBox::Show("Файл успешно загружен.", "Успех", MessageBoxButtons::OK, MessageBoxIcon::Information);
+                }
+                catch (Exception^ ex) {
+                    MessageBox::Show("Ошибка при загрузке файла:\n" + ex->Message, "Ошибка", MessageBoxButtons::OK, MessageBoxIcon::Error);
+                }
             }
         }
 
         void OnSave(Object^, EventArgs^) {
             SaveFileDialog^ sfd = gcnew SaveFileDialog();
+            sfd->Filter = "Текстовые файлы (*.txt)|*.txt";
+            sfd->Title = "Сохранить базу данных";
+            sfd->DefaultExt = "txt";
+            sfd->AddExtension = true;
+
             if (sfd->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
-                manager->Save(sfd->FileName);
+                try {
+                    manager->Save(sfd->FileName);
+                    MessageBox::Show("Файл успешно сохранён.", "Успех", MessageBoxButtons::OK, MessageBoxIcon::Information);
+                }
+                catch (Exception^ ex) {
+                    MessageBox::Show("Ошибка при сохранении файла:\n" + ex->Message, "Ошибка", MessageBoxButtons::OK, MessageBoxIcon::Error);
+                }
             }
         }
 
-        void OnAdd(Object^, EventArgs^) {
-            // Можно реализовать форму ввода — по желанию
-            MessageBox::Show("Добавление записи не реализовано");
+
+        void OnAdd(Object^ sender, EventArgs^ e) {
+            AddTicketForm^ form = gcnew AddTicketForm();
+            if (form->ShowDialog() == System::Windows::Forms::DialogResult::OK && form->result != nullptr) {
+                manager->Add(form->result);
+                UpdateGrid(manager->GetAll());
+            }
         }
 
         void OnDelete(Object^, EventArgs^) {

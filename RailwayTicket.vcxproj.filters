@@ -27,6 +27,9 @@
     <ClInclude Include="MainForm.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="AddTicketForm.h">
+      <Filter>UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">

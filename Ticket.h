@@ -33,30 +33,43 @@ public:
     }
 
     static Ticket^ FromLine(String^ line) {
-        array<String^>^ parts = line->Split(';');
-        wchar_t wagonType = parts[4][0];
+        try {
+            array<String^>^ parts = line->Split(';');
 
-        array<String^>^ dateTimeParts = parts[7]->Split(' ');
-        array<String^>^ dateParts = dateTimeParts[0]->Split('.');
-        array<String^>^ timeParts = dateTimeParts[1]->Split(':');
+            if (parts->Length != 9)
+                throw gcnew FormatException("Неверное количество полей: " + parts->Length);
 
-        CDateTime dt;
-        dt.date.year = Convert::ToUInt16(dateParts[0]);
-        dt.date.month = Convert::ToUInt16(dateParts[1]);
-        dt.date.day = Convert::ToUInt16(dateParts[2]);
-        dt.time.hour = Convert::ToUInt16(timeParts[0]);
-        dt.time.minute = Convert::ToUInt16(timeParts[1]);
-        dt.time.second = Convert::ToUInt16(timeParts[2]);
+            wchar_t wagonType = parts[4][0];
 
-        return gcnew Ticket(
-            parts[0],
-            Convert::ToUInt16(parts[1]),
-            parts[2],
-            parts[3],
-            wagonType,
-            Convert::ToSingle(parts[5]),
-            Convert::ToBoolean(parts[6]),
-            dt
-        );
+            array<String^>^ dateParts = parts[7]->Split('.');
+            if (dateParts->Length != 3)
+                throw gcnew FormatException("Неверный формат даты: " + parts[7]);
+
+            array<String^>^ timeParts = parts[8]->Split(':');
+            if (timeParts->Length != 3)
+                throw gcnew FormatException("Неверный формат времени: " + parts[8]);
+
+            CDateTime dt;
+            dt.date.year = Convert::ToUInt16(dateParts[0]);
+            dt.date.month = Convert::ToUInt16(dateParts[1]);
+            dt.date.day = Convert::ToUInt16(dateParts[2]);
+            dt.time.hour = Convert::ToUInt16(timeParts[0]);
+            dt.time.minute = Convert::ToUInt16(timeParts[1]);
+            dt.time.second = Convert::ToUInt16(timeParts[2]);
+
+            return gcnew Ticket(
+                parts[0],
+                Convert::ToUInt16(parts[1]),
+                parts[2],
+                parts[3],
+                wagonType,
+                Convert::ToSingle(parts[5]),
+                Convert::ToBoolean(parts[6]),
+                dt
+            );
+        }
+        catch (Exception^ ex) {
+            throw gcnew FormatException("Ошибка при разборе строки: " + line + "\n" + ex->Message);
+        }
     }
 };

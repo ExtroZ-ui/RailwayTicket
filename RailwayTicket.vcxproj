@@ -131,6 +131,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AddTicketForm.h" />
     <ClInclude Include="CDateTime.h" />
     <ClInclude Include="MainForm.h" />
     <ClInclude Include="Ticket.h" />
