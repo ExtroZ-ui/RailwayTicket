@@ -45,4 +45,9 @@
       <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Base.txt">
+      <Filter>Base</Filter>
+    </Text>
+  </ItemGroup>
 </Project>
