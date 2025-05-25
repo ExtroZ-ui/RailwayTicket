@@ -69,12 +69,12 @@ private:
         float minVal, maxVal;
         if (!Single::TryParse(tbMin->Text, minVal) || !Single::TryParse(tbMax->Text, maxVal)) {
             MessageBox::Show("Пожалуйста, введите корректные числа.", "Ошибка", MessageBoxButtons::OK, MessageBoxIcon::Error);
-            this->DialogResult = System::Windows::Forms::DialogResult::None; // Не закрывать окно
+            this->DialogResult = System::Windows::Forms::DialogResult::None; 
             return;
         }
         if (minVal > maxVal) {
             MessageBox::Show("Минимальная цена не может быть больше максимальной.", "Ошибка", MessageBoxButtons::OK, MessageBoxIcon::Error);
-            this->DialogResult = System::Windows::Forms::DialogResult::None; // Не закрывать окно
+            this->DialogResult = System::Windows::Forms::DialogResult::None; 
             return;
         }
         MinPrice = minVal;

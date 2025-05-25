@@ -12,6 +12,7 @@ private:
     ref class TrainNumberComparer : public IComparer<Ticket^> {
     public:
         virtual int Compare(Ticket^ a, Ticket^ b) {
+            if (a == nullptr || b == nullptr) return 0;
             return a->trainNumber.CompareTo(b->trainNumber);
         }
     };
@@ -23,6 +24,9 @@ public:
 
     void Load(String^ filename) {
         tickets->Clear();
+        if (String::IsNullOrWhiteSpace(filename))
+            throw gcnew ArgumentException("Имя файла не может быть пустым.");
+
         if (!File::Exists(filename)) {
             throw gcnew FileNotFoundException("Файл не найден: " + filename);
         }
@@ -31,10 +35,16 @@ public:
             for each (String ^ line in File::ReadAllLines(filename)) {
                 if (!String::IsNullOrWhiteSpace(line)) {
                     try {
-                        tickets->Add(Ticket::FromLine(line));
+                        Ticket^ t = Ticket::FromLine(line);
+                        if (t != nullptr) {
+                            tickets->Add(t);
+                        }
                     }
                     catch (FormatException^ ex) {
-                        Console::WriteLine("Строка пропущена: {0}", ex->Message);
+                        Console::WriteLine("Строка пропущена (ошибка формата): {0}", ex->Message);
+                    }
+                    catch (Exception^ ex) {
+                        Console::WriteLine("Неожиданная ошибка при разборе строки: {0}", ex->Message);
                     }
                 }
             }
@@ -45,10 +55,15 @@ public:
     }
 
     void Save(String^ filename) {
+        if (String::IsNullOrWhiteSpace(filename))
+            throw gcnew ArgumentException("Имя файла не может быть пустым.");
+
         try {
             List<String^>^ lines = gcnew List<String^>();
-            for each (Ticket ^ t in tickets)
-                lines->Add(t->ToLine());
+            for each (Ticket ^ t in tickets) {
+                if (t != nullptr)
+                    lines->Add(t->ToLine());
+            }
 
             File::WriteAllLines(filename, lines);
         }
@@ -62,67 +77,93 @@ public:
     }
 
     void Add(Ticket^ t) {
-        if (t == nullptr) throw gcnew ArgumentNullException("Объект билета не может быть null");
+        if (t == nullptr) throw gcnew ArgumentNullException("Билет не может быть null");
         tickets->Add(t);
     }
 
     void Update(int index, Ticket^ updated) {
-        if (index < 0 || index >= tickets->Count)
-            throw gcnew ArgumentOutOfRangeException("Недопустимый индекс для изменения: " + index);
         if (updated == nullptr)
             throw gcnew ArgumentNullException("Новый билет не может быть null");
+
+        if (index < 0 || index >= tickets->Count)
+            throw gcnew ArgumentOutOfRangeException("Недопустимый индекс: " + index);
 
         tickets[index] = updated;
     }
 
     void Delete(int index) {
-        if (index >= 0 && index < tickets->Count)
-            tickets->RemoveAt(index);
-        else
-            throw gcnew ArgumentOutOfRangeException("Недопустимый индекс для удаления: " + index);
+        if (index < 0 || index >= tickets->Count)
+            throw gcnew ArgumentOutOfRangeException("Недопустимый индекс: " + index);
+        tickets->RemoveAt(index);
     }
 
     void SortByTrainNumber() {
-        tickets->Sort(gcnew TrainNumberComparer());
+        try {
+            tickets->Sort(gcnew TrainNumberComparer());
+        }
+        catch (Exception^ ex) {
+            throw gcnew InvalidOperationException("Ошибка при сортировке: " + ex->Message);
+        }
     }
 
     List<Ticket^>^ FindByTrainNumber(unsigned short number) {
         List<Ticket^>^ res = gcnew List<Ticket^>();
         for each (Ticket ^ t in tickets)
-            if (t->trainNumber == number)
+            if (t != nullptr && t->trainNumber == number)
                 res->Add(t);
         return res;
     }
 
     List<Ticket^>^ FilterByPrice(float min, float max) {
-        if (min > max) throw gcnew ArgumentException("Минимальная цена не может быть больше максимальной");
+        if (min > max)
+            throw gcnew ArgumentException("Минимальная цена не может быть больше максимальной.");
 
         List<Ticket^>^ res = gcnew List<Ticket^>();
         for each (Ticket ^ t in tickets)
-            if (t->price >= min && t->price <= max)
+            if (t != nullptr && t->price >= min && t->price <= max)
                 res->Add(t);
         return res;
     }
 
-    List<Ticket^>^ ExtractTicketsWithServices(Char wagonType)
-    {
+    List<Ticket^>^ ExtractTicketsWithServices(Char wagonType) {
         List<Ticket^>^ extracted = gcnew List<Ticket^>();
 
-        for (int i = tickets->Count - 1; i >= 0; i--) {
-            Ticket^ t = tickets[i];
-            // Условие: тип вагона совпадает И пассажир без льгот
-            if (t->wagonType == wagonType && !t->hasDiscount) {
-                extracted->Add(t);
-                tickets->RemoveAt(i);
+        try {
+            for (int i = tickets->Count - 1; i >= 0; i--) {
+                Ticket^ t = tickets[i];
+                if (t != nullptr && t->wagonType == wagonType && !t->hasDiscount) {
+                    extracted->Add(t);
+                    tickets->RemoveAt(i);
+                }
             }
+        }
+        catch (Exception^ ex) {
+            throw gcnew InvalidOperationException("Ошибка при извлечении билетов: " + ex->Message);
         }
 
         return extracted;
     }
 
+    List<Ticket^>^ GetTicketsWithServicesPreview(Char wagonType) {
+        List<Ticket^>^ result = gcnew List<Ticket^>();
+        try {
+            for each (Ticket ^ t in tickets) {
+                if (t != nullptr && t->wagonType == wagonType && !t->hasDiscount)
+                    result->Add(t);
+            }
+        }
+        catch (Exception^ ex) {
+            throw gcnew InvalidOperationException("Ошибка при фильтрации билетов: " + ex->Message);
+        }
+
+        return result;
+    }
+
     Dictionary<String^, int>^ DepartureCityStats() {
         auto dict = gcnew Dictionary<String^, int>();
         for each (Ticket ^ t in tickets) {
+            if (t == nullptr || String::IsNullOrEmpty(t->departureCity)) continue;
+
             if (!dict->ContainsKey(t->departureCity))
                 dict[t->departureCity] = 0;
             dict[t->departureCity]++;
@@ -133,6 +174,8 @@ public:
     Dictionary<String^, int>^ ArrivalCityStats() {
         auto dict = gcnew Dictionary<String^, int>();
         for each (Ticket ^ t in tickets) {
+            if (t == nullptr || String::IsNullOrEmpty(t->arrivalCity)) continue;
+
             if (!dict->ContainsKey(t->arrivalCity))
                 dict[t->arrivalCity] = 0;
             dict[t->arrivalCity]++;

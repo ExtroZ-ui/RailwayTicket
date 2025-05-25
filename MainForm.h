@@ -203,7 +203,6 @@ namespace TrainTickets {
 
             // Если пользователь нажал "Отмена" или ничего не ввёл — просто выходим
             if (String::IsNullOrWhiteSpace(input)) {
-                // Можно показать все билеты или не менять таблицу
                 UpdateGrid(manager->GetAll());
                 return;
             }
@@ -212,10 +211,8 @@ namespace TrainTickets {
                 unsigned short num = Convert::ToUInt16(input);
                 auto results = manager->FindByTrainNumber(num);
 
-                // Если результатов нет — можно вывести сообщение или очистить таблицу
                 if (results->Count == 0) {
                     MessageBox::Show("Поезда с таким номером не найдено.", "Поиск", MessageBoxButtons::OK, MessageBoxIcon::Information);
-                    // По желанию — показать все билеты или очистить
                     UpdateGrid(manager->GetAll());
                 }
                 else {
