@@ -3,6 +3,7 @@
 #include "AddTicketForm.h"
 #include "PriceRangeForm.h"
 #include "StatsForm.h"
+#include "ServiceForm.h"
 #using <Microsoft.VisualBasic.dll>
 
 namespace TrainTickets {
@@ -240,10 +241,17 @@ namespace TrainTickets {
         }
 
         void OnExtractServices(Object^, EventArgs^) {
-            Char type = 'К';
-            List<Ticket^>^ extracted = manager->ExtractWithServices(type);
+            ServiceForm^ serviceForm = gcnew ServiceForm(manager);
+
+            // Подписка на событие, чтобы обновлять основную таблицу при удалении билетов
+            serviceForm->TicketsExtracted += gcnew EventHandler(this, &MainForm::OnTicketsExtracted);
+
+            serviceForm->ShowDialog(this);
+        }
+
+        // Обработчик события обновления таблицы билетов
+        void OnTicketsExtracted(Object^ sender, EventArgs^ e) {
             UpdateGrid(manager->GetAll());
-            MessageBox::Show("Перенесено: " + extracted->Count.ToString());
         }
 
 

@@ -36,6 +36,9 @@
     <ClInclude Include="StatsForm.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="ServiceForm.h">
+      <Filter>UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">

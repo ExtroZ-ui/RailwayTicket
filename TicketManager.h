@@ -104,39 +104,39 @@ public:
         return res;
     }
 
-    List<Ticket^>^ ExtractWithServices(Char wagonType) {
-        List<Ticket^>^ result = gcnew List<Ticket^>();
+    List<Ticket^>^ ExtractTicketsWithServices(Char wagonType)
+    {
+        List<Ticket^>^ extracted = gcnew List<Ticket^>();
+
         for (int i = tickets->Count - 1; i >= 0; i--) {
             Ticket^ t = tickets[i];
+            // Условие: тип вагона совпадает И пассажир без льгот
             if (t->wagonType == wagonType && !t->hasDiscount) {
-                result->Add(t);
+                extracted->Add(t);
                 tickets->RemoveAt(i);
             }
         }
-        return result;
+
+        return extracted;
     }
 
-    Dictionary<String^, int>^ TicketManager::DepartureCityStats() {
+    Dictionary<String^, int>^ DepartureCityStats() {
         auto dict = gcnew Dictionary<String^, int>();
-
         for each (Ticket ^ t in tickets) {
             if (!dict->ContainsKey(t->departureCity))
                 dict[t->departureCity] = 0;
             dict[t->departureCity]++;
         }
-
         return dict;
     }
 
-    Dictionary<String^, int>^ TicketManager::ArrivalCityStats() {
+    Dictionary<String^, int>^ ArrivalCityStats() {
         auto dict = gcnew Dictionary<String^, int>();
-
         for each (Ticket ^ t in tickets) {
             if (!dict->ContainsKey(t->arrivalCity))
                 dict[t->arrivalCity] = 0;
             dict[t->arrivalCity]++;
         }
-
         return dict;
     }
 };
